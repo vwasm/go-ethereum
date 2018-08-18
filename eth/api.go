@@ -17,6 +17,7 @@
 package eth
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
 	"errors"
@@ -344,6 +345,40 @@ func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]*BadBlockArgs, 
 		}
 	}
 	return results, nil
+}
+
+type AccountRangeResult struct {
+	result []common.Address `json:"result"`
+}
+
+func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountRangeResult, error) {
+	it := trie.NewIterator(st.NodeIterator(start[:]))
+	result := []common.Address{}
+	for i := 0; i < maxResult && it.Next(); i++ {
+		key := st.GetKey(it.Key)
+		if key == nil {
+			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
+		}
+		result = append(result, common.BytesToAddress(key))
+	}
+	return AccountRangeResult{result}, nil
+}
+
+//block hash or number, tx index, start address hash, max results
+func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr uint64, txIndex int, startAddr *common.Address, maxResults int) (AccountRangeResult, error) {
+	zeros := make([]byte, common.HashLength)
+
+	if bytes.Equal(startAddr[:], zeros) {
+		startAddr = nil
+	}
+
+	blockHash := api.eth.blockchain.GetBlockByNumber(blockNr).Hash()
+	_, _, statedb, err := api.computeTxEnv(blockHash, txIndex, 0)
+	if err != nil {
+		return AccountRangeResult{}, err
+	}
+
+	return accountRange(statedb.GetTrie(), startAddr, maxResults)
 }
 
 // StorageRangeResult is the result of a debug_storageRangeAt API call.
