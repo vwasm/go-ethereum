@@ -359,6 +359,7 @@ func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountR
 		if key == nil {
 			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
 		}
+		fmt.Println(common.BytesToAddress(key))
 		result = append(result, common.BytesToAddress(key))
 	}
 	return AccountRangeResult{result}, nil
