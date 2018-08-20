@@ -372,7 +372,7 @@ func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr uint64, tx
 		startAddr = nil
 	}
 
-	blockHash := api.eth.blockchain.GetBlockByNumber(blockNr).Hash()
+	blockHash := api.eth.blockchain.CurrentBlock().Hash()
 	_, _, statedb, err := api.computeTxEnv(blockHash, txIndex, 0)
 	if err != nil {
 		return AccountRangeResult{}, err
