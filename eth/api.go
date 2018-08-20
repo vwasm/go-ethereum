@@ -348,19 +348,19 @@ func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]*BadBlockArgs, 
 }
 
 type AccountRangeResult struct {
-	result []common.Address `json:"result"`
+	result []common.Hash `json:"result"`
 }
 
 func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountRangeResult, error) {
 	it := trie.NewIterator(st.NodeIterator(start[:]))
-	result := []common.Address{}
+	result := []common.Hash{}
 	for i := 0; i < maxResult && it.Next(); i++ {
 		key := st.GetKey(it.Key)
 		if key == nil {
 			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
 		}
 		fmt.Println(common.BytesToAddress(key))
-		result = append(result, common.BytesToAddress(key))
+		result = append(result, common.BytesToHash(key))
 	}
 	return AccountRangeResult{result}, nil
 }
