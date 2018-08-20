@@ -369,6 +369,10 @@ func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountR
 func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr uint64, txIndex int, startAddr *common.Address, maxResults int) (AccountRangeResult, error) {
 	zeros := make([]byte, common.HashLength)
 
+  if (maxResults > 100) {
+    maxResults = 100
+  }
+
 	if bytes.Equal(startAddr[:], zeros) {
 		startAddr = nil
 	}
