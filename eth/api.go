@@ -366,7 +366,7 @@ func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountR
 }
 
 //block hash or number, tx index, start address hash, max results
-func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr uint64, txIndex int, startAddr *common.Address, maxResults int) (AccountRangeResult, error) {
+func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Address, maxResults int) (AccountRangeResult, error) {
 	zeros := make([]byte, common.HashLength)
 
   if (maxResults > 100) {
