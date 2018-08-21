@@ -358,9 +358,10 @@ func accountRange(st state.Trie, start *common.Hash, maxResult int) (AccountRang
 	result := AccountRangeResult{AddressMap: addressMap{}}
 	for i := 0; i < maxResult && it.Next(); i++ {
 		key := st.GetKey(it.Key)
-		if key == nil {
-			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
-		}
+		// If key is nil, that means it wasn't found in the preimage database.
+		// This is not a problem, because we still return the hash of the key together with
+		// address zero and the client can very easily determine that the hash of the addres zero
+		// is not matching, which means it wasn't found.
 		result.AddressMap[common.BytesToHash(it.Key)] = common.BytesToAddress(key)
 	}
 	return result, nil
