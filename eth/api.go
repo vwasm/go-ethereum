@@ -364,11 +364,12 @@ type AccountRangeResult struct {
 	result []common.Address `json:"result"`
 }
 
-func accountRange(st state.Trie, start *common.Address, maxResult int) ([]common.Address, error) {
+func accountRange(st state.Trie, start *common.Hash, maxResult int) ([]common.Address, error) {
 	it := trie.NewIterator(st.NodeIterator(start[:]))
 	result := make([]common.Address, 0) // return [] instead of nil if empty
 	for i := 0; i < maxResult && it.Next(); i++ {
 		key := st.GetKey(it.Key)
+//		key := it.Key
 		if key == nil {
 			return nil, fmt.Errorf("no preimage found for hash %x", it.Key)
 		}
@@ -379,7 +380,7 @@ func accountRange(st state.Trie, start *common.Address, maxResult int) ([]common
 }
 
 //block hash or number, tx index, start address hash, max results
-func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Address, maxResults int) ([]common.Address, error) {
+func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Hash, maxResults int) ([]common.Address, error) {
 	zeros := make([]byte, common.HashLength)
 
   if (maxResults > 100) {
