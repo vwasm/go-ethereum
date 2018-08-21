@@ -347,25 +347,27 @@ func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]*BadBlockArgs, 
 	return results, nil
 }
 
+type addressMap map[common.Hash]common.Address
+
 type AccountRangeResult struct {
-	result []common.Address `json:"result"`
+	AddressMap addressMap `json:"addressMap"`
 }
 
-func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountRangeResult, error) {
+func accountRange(st state.Trie, start *common.Hash, maxResult int) (AccountRangeResult, error) {
 	it := trie.NewIterator(st.NodeIterator(start[:]))
-	result := []common.Address{}
+	result := AccountRangeResult{AddressMap: addressMap{}}
 	for i := 0; i < maxResult && it.Next(); i++ {
 		key := st.GetKey(it.Key)
 		if key == nil {
 			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
 		}
-		result = append(result, common.BytesToAddress(key))
+		result.AddressMap[common.BytesToHash(it.Key)] = common.BytesToAddress(key)
 	}
-	return AccountRangeResult{result}, nil
+	return result, nil
 }
 
 //block hash or number, tx index, start address hash, max results
-func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Address, maxResults int) (AccountRangeResult, error) {
+func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Hash, maxResults int) (AccountRangeResult, error) {
 	zeros := make([]byte, common.HashLength)
 
 	if (maxResults > 100) {
