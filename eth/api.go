@@ -347,26 +347,39 @@ func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]*BadBlockArgs, 
 	return results, nil
 }
 
+/*
+// Accounts returns the collection of accounts this node manages
+func (s *PublicAccountAPI) Accounts() []common.Address {
+        addresses := make([]common.Address, 0) // return [] instead of nil if empty
+        for _, wallet := range s.am.Wallets() {
+                for _, account := range wallet.Accounts() {
+                        addresses = append(addresses, account.Address)
+                }
+        }
+        return addresses
+}
+*/
+
 type AccountRangeResult struct {
-	result []common.Hash `json:"result"`
+	result []common.Address `json:"result"`
 }
 
-func accountRange(st state.Trie, start *common.Address, maxResult int) (AccountRangeResult, error) {
+func accountRange(st state.Trie, start *common.Address, maxResult int) ([]common.Address, error) {
 	it := trie.NewIterator(st.NodeIterator(start[:]))
-	result := []common.Hash{}
+	result := make([]common.Address, 0) // return [] instead of nil if empty
 	for i := 0; i < maxResult && it.Next(); i++ {
 		key := st.GetKey(it.Key)
 		if key == nil {
-			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
+			return nil, fmt.Errorf("no preimage found for hash %x", it.Key)
 		}
 		fmt.Println(common.BytesToAddress(key))
-		result = append(result, common.BytesToHash(key))
+		result = append(result, common.BytesToAddress(key))
 	}
-	return AccountRangeResult{result}, nil
+	return result, nil
 }
 
 //block hash or number, tx index, start address hash, max results
-func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Address, maxResults int) (AccountRangeResult, error) {
+func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Address, maxResults int) ([]common.Address, error) {
 	zeros := make([]byte, common.HashLength)
 
   if (maxResults > 100) {
@@ -380,7 +393,7 @@ func (api *PrivateDebugAPI) AccountRange(ctx context.Context, blockNr rpc.BlockN
 	blockHash := api.eth.blockchain.CurrentBlock().Hash()
 	_, _, statedb, err := api.computeTxEnv(blockHash, txIndex, 0)
 	if err != nil {
-		return AccountRangeResult{}, err
+		return make([]common.Address, 0), err
 	}
 
 	return accountRange(statedb.GetTrie(), startAddr, maxResults)
