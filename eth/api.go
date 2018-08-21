@@ -347,45 +347,32 @@ func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]*BadBlockArgs, 
 	return results, nil
 }
 
-/*
-// Accounts returns the collection of accounts this node manages
-func (s *PublicAccountAPI) Accounts() []common.Address {
-        addresses := make([]common.Address, 0) // return [] instead of nil if empty
-        for _, wallet := range s.am.Wallets() {
-                for _, account := range wallet.Accounts() {
-                        addresses = append(addresses, account.Address)
-                }
-        }
-        return addresses
-}
-*/
+type addressMap map[common.Hash]common.Address
 
 type AccountRangeResult struct {
-	result []common.Address `json:"result"`
+	AddressMap addressMap `json:"addressMap"`
 }
 
-func accountRange(st state.Trie, start *common.Hash, maxResult int) ([]common.Address, error) {
+func accountRange(st state.Trie, start *common.Hash, maxResult int) (AccountRangeResult, error) {
 	it := trie.NewIterator(st.NodeIterator(start[:]))
-	result := make([]common.Address, 0) // return [] instead of nil if empty
+	result := AccountRangeResult{AddressMap: addressMap{}}
 	for i := 0; i < maxResult && it.Next(); i++ {
 		key := st.GetKey(it.Key)
-//		key := it.Key
 		if key == nil {
-			return nil, fmt.Errorf("no preimage found for hash %x", it.Key)
+			return AccountRangeResult{}, fmt.Errorf("no preimage found for hash %x", it.Key)
 		}
-		fmt.Println(common.BytesToAddress(key))
-		result = append(result, common.BytesToAddress(key))
+		result.AddressMap[common.BytesToHash(it.Key)] = common.BytesToAddress(key)
 	}
 	return result, nil
 }
 
 //block hash or number, tx index, start address hash, max results
-func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Hash, maxResults int) ([]common.Address, error) {
+func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Hash, maxResults int) (AccountRangeResult, error) {
 	zeros := make([]byte, common.HashLength)
 
-  if (maxResults > 100) {
-    maxResults = 100
-  }
+	if (maxResults > 100) {
+		maxResults = 100
+	}
 
 	if bytes.Equal(startAddr[:], zeros) {
 		startAddr = nil
@@ -394,7 +381,7 @@ func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.Bloc
 	blockHash := api.eth.blockchain.CurrentBlock().Hash()
 	_, _, statedb, err := api.computeTxEnv(blockHash, txIndex, 0)
 	if err != nil {
-		return make([]common.Address, 0), err
+		return AccountRangeResult{}, err
 	}
 
 	return accountRange(statedb.GetTrie(), startAddr, maxResults)
