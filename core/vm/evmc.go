@@ -42,6 +42,7 @@ var (
 )
 
 func createVM() *evmc.Instance {
+	log.Info("core/evmc.go createVM called.")
 	createMu.Lock()
 	defer createMu.Unlock()
 
