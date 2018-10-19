@@ -17,6 +17,7 @@
 package eth
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
 	"errors"
@@ -334,6 +335,47 @@ func (api *PrivateDebugAPI) GetBadBlocks(ctx context.Context) ([]*BadBlockArgs, 
 		}
 	}
 	return results, nil
+}
+
+type addressMap map[common.Hash]common.Address
+
+type AccountRangeResult struct {
+	AddressMap addressMap `json:"addressMap"`
+}
+
+func accountRange(st state.Trie, start *common.Hash, maxResult int) (AccountRangeResult, error) {
+	it := trie.NewIterator(st.NodeIterator(start[:]))
+	result := AccountRangeResult{AddressMap: addressMap{}}
+	for i := 0; i < maxResult && it.Next(); i++ {
+		key := st.GetKey(it.Key)
+		// If key is nil, that means it wasn't found in the preimage database.
+		// This is not a problem, because we still return the hash of the key together with
+		// address zero and the client can very easily determine that the hash of the addres zero
+		// is not matching, which means it wasn't found.
+		result.AddressMap[common.BytesToHash(it.Key)] = common.BytesToAddress(key)
+	}
+	return result, nil
+}
+
+//block hash or number, tx index, start address hash, max results
+func (api *PrivateDebugAPI) AccountRangeAt(ctx context.Context, blockNr rpc.BlockNumber, txIndex int, startAddr *common.Hash, maxResults int) (AccountRangeResult, error) {
+	zeros := make([]byte, common.HashLength)
+
+	if (maxResults > 100) {
+		maxResults = 100
+	}
+
+	if bytes.Equal(startAddr[:], zeros) {
+		startAddr = nil
+	}
+
+	blockHash := api.eth.blockchain.CurrentBlock().Hash()
+	_, _, statedb, err := api.computeTxEnv(blockHash, txIndex, 0)
+	if err != nil {
+		return AccountRangeResult{}, err
+	}
+
+	return accountRange(statedb.GetTrie(), startAddr, maxResults)
 }
 
 // StorageRangeResult is the result of a debug_storageRangeAt API call.
