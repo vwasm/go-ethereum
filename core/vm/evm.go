@@ -23,6 +23,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/params"
@@ -132,6 +133,7 @@ type EVM struct {
 // NewEVM returns a new EVM. The returned EVM is not thread safe and should
 // only ever be used *once*.
 func NewEVM(ctx Context, statedb StateDB, chainConfig *params.ChainConfig, vmConfig Config) *EVM {
+	log.Info("core/evm.go NewEVM called.")
 	evm := &EVM{
 		Context:      ctx,
 		StateDB:      statedb,
@@ -141,7 +143,12 @@ func NewEVM(ctx Context, statedb StateDB, chainConfig *params.ChainConfig, vmCon
 		interpreters: make([]Interpreter, 0, 1),
 	}
 
+	//log.Info("core/evm.go NewEVM.", "os.Getenv(EVMC_PATH)", os.Getenv("EVMC_PATH"))
+
 	if chainConfig.IsEWASM(ctx.BlockNumber) {
+		log.Info("core/evm.go NewEVM chainConfig.IsEWASM is true.")
+		log.Info("core/evm.go NewEVM.", "vmConfig.EWASMInterpreter", vmConfig.EWASMInterpreter)
+
 		if vmConfig.EWASMInterpreter != "" {
 			extIntOpts := strings.Split(vmConfig.EWASMInterpreter, ":")
 			path := extIntOpts[0]

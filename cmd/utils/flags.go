@@ -1199,6 +1199,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *eth.Config) {
 	}
 
 	if ctx.GlobalIsSet(EWASMInterpreterFlag.Name) {
+		log.Info("cmd/utils/flags.go. EWASMInterpreterFlag is true.")
 		cfg.EWASMInterpreter = ctx.GlobalString(EWASMInterpreterFlag.Name)
 	}
 
