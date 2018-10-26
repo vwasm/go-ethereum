@@ -148,6 +148,7 @@ func New(ctx *node.ServiceContext, config *Config) (*Ethereum, error) {
 		}
 		rawdb.WriteDatabaseVersion(chainDb, core.BlockChainVersion)
 	}
+	log.Info("backend.go New. setting vmConfig to...", "config.EWASMInterpreter", config.EWASMInterpreter)
 	var (
 		vmConfig = vm.Config{
 			EnablePreimageRecording: config.EnablePreimageRecording,

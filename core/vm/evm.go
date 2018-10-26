@@ -147,6 +147,7 @@ func NewEVM(ctx Context, statedb StateDB, chainConfig *params.ChainConfig, vmCon
 
 	if chainConfig.IsEWASM(ctx.BlockNumber) {
 		log.Info("core/evm.go NewEVM chainConfig.IsEWASM is true.")
+		// cfg.EWASMInterpreter is set in flags.go
 		log.Info("core/evm.go NewEVM.", "vmConfig.EWASMInterpreter", vmConfig.EWASMInterpreter)
 
 		if vmConfig.EWASMInterpreter != "" {
