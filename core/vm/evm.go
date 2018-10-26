@@ -19,7 +19,7 @@ package vm
 import (
 	"math/big"
 	"os"
-	"strings"
+//	"strings"
 	"sync/atomic"
 	"time"
 
