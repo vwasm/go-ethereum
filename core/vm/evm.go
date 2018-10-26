@@ -147,16 +147,34 @@ func NewEVM(ctx Context, statedb StateDB, chainConfig *params.ChainConfig, vmCon
 
 	if chainConfig.IsEWASM(ctx.BlockNumber) {
 		log.Info("core/evm.go NewEVM chainConfig.IsEWASM is true.")
+
 		// cfg.EWASMInterpreter is set in flags.go
+		// this is currently broken.
 		log.Info("core/evm.go NewEVM.", "vmConfig.EWASMInterpreter", vmConfig.EWASMInterpreter)
 
-		if vmConfig.EWASMInterpreter != "" {
+		// this is the old way, reading from ENV var, which  works.
+		log.Info("core/evm.go NewEVM.", "os.Getenv(EVMC_PATH)", os.Getenv("EVMC_PATH"))
+
+		if len(os.Getenv("EVMC_PATH")) != 0 {
+			log.Info("core/evm.go NewEVM. EVMC_PATH length is not zero..")
+		}
+
+		// geth --vm.ewasm="/home/ewasm/hera/src/libhera.so:metering=true:fallback=true"
+
+		//if vmConfig.EWASMInterpreter != "" {
+		if len(os.Getenv("EVMC_PATH")) != 0 {
+			/* 
+			// *** this stuff is broken until the vmConfig works...
 			extIntOpts := strings.Split(vmConfig.EWASMInterpreter, ":")
 			path := extIntOpts[0]
 			options := []string{}
 			if len(extIntOpts) > 1 {
 				options = extIntOpts[1:]
 			}
+			*/
+			options := []string{"metering=true", "fallback=true"}
+			path := os.Getenv("EVMC_PATH")
+			log.Info("calling newEVMC...")
 		 	evm.interpreters = append(evm.interpreters, NewEVMC(path, options, evm))
 		} else {
 			panic("No supported ewasm interpreter yet.")
